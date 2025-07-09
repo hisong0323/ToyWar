@@ -37,6 +37,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
@@ -51,7 +52,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             if (Physics.Raycast(ray, out var hit, Mathf.Infinity))
             {
                 _spawnPosition = hit.point;
-                _spawnPosition.y = 1;
+                _spawnPosition.y = 2;
             }
         }
     }
@@ -66,7 +67,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         {
             GameMode = GameMode.AutoHostOrClient,
             SessionName = null, // null로 두면 Fusion이 알아서 랜덤 매칭
-            PlayerCount = maxPlayer
+            PlayerCount = maxPlayer,
+           // SceneManager = runnerPrefab.GetComponent<NetworkSceneManagerDefault>()
+
         };
 
         _runner.StartGame(startGameArgs);

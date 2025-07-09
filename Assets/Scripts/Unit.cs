@@ -1,21 +1,39 @@
 using Fusion;
 using UnityEngine;
+using UnityEngine.UI;
 
-public abstract class Unit : NetworkBehaviour
+public class Unit : NetworkBehaviour
 {
-    [SerializeField] protected UnitData _unitData;
 
-    [SerializeField][Networked] private Faction faction { get; set; }
+    [SerializeField] private Faction faction;
 
-    [Networked] protected TickTimer attackCooldown { get; set; }
+    [Networked] private TickTimer attackCooldown { get; set; }
+
+    [Networked] private TickTimer spawnDelay { get; set; }
 
     [SerializeField]
-    private GameObject targetBase;
+    private UnitData _unitData;
 
-    private Collider[] detectionArea;
+    [SerializeField]
+    private Slider hpBar;
 
-    private bool canAttack;
+    private Unit targetBase;
+
+    private Unit target;
+
+    private Collider[] detectionArea = new Collider[50];
+
+    private float targetDistance;
+
+    private bool canAttack = true;
+
+    private int unitLayerMask;
+
+    private IAttackBehaviour attackBehaviour;
+
+    private int currentHP;
     public Faction Faction => faction;
+    public UnitData UnitData => _unitData;
 
     public void Init(Faction faction)
     {
@@ -27,27 +45,63 @@ public abstract class Unit : NetworkBehaviour
             targetBase = GameManager.Instance.PlayerBase[0];
     }
 
+    private void Awake()
+    {
+        unitLayerMask = LayerMask.GetMask("Unit");
+    }
+
+    private void Start()
+    {
+        switch (_unitData.UnitType)
+        {
+            case UnitType.Melee:
+                attackBehaviour = new MeleeAttack();
+                break;
+            case UnitType.Ranged:
+                attackBehaviour = new RangedAttack((RangedUnitData)_unitData);
+                break;
+        }
+    }
     public override void Spawned()
     {
         if (Object.HasStateAuthority)
         {
-
+            spawnDelay = TickTimer.CreateFromSeconds(Runner, 0.5f);
+            currentHP = _unitData.MaxHP;
+            UpdateHPBar();
         }
     }
 
     public override void FixedUpdateNetwork()
     {
-
-        if (!Object.HasStateAuthority)
+        if (!Object.HasStateAuthority || !spawnDelay.Expired(Runner))
         {
             return;
         }
-        if (attackCooldown.Expired(Runner))
+
+        DetectionUnit();
+
+        if (IsInAttackRange())
         {
-            Debug.Log("공격 가능!");
+            TryAttack();
+        }
+        else if (_unitData.MoveSpeed > 0)
+        {
+            Chase();
+        }
+
+        if (attackCooldown.Expired(Runner) && canAttack == false)
+        {
             canAttack = true;
         }
-        FindTarget();
+    }
+
+    private bool IsInAttackRange()
+    {
+        if (target == null)
+            return false;
+
+        return targetDistance <= _unitData.AttackRange;
     }
 
     private void TryAttack()
@@ -56,74 +110,97 @@ public abstract class Unit : NetworkBehaviour
         {
             attackCooldown = TickTimer.CreateFromSeconds(Runner, _unitData.AttackDelay);
             canAttack = false;
-            Debug.Log("공격함!");
-        }
-        else
-        {
-            Debug.Log("공격 쿨타임 기다리는중!");
+            attackBehaviour.Attack(this, target);
         }
     }
 
-    protected abstract void Attack();
-
-    protected void FindTarget()
+    private void UpdateHPBar()
     {
-        Vector3 centerPosition = transform.forward * _unitData.DetectionCenterOffset;
+        if (hpBar == null)
+            return;
 
-        detectionArea = Physics.OverlapSphere(transform.position + centerPosition, _unitData.AttackRange, LayerMask.GetMask("Unit"));
-
-        Transform targetTransform = DetectionUnit(detectionArea);
-
-        if (targetTransform != null)
-        {
-            TryAttack();
-        }
-        else
-        {
-            detectionArea = Physics.OverlapSphere(transform.position, _unitData.DetectionRange, LayerMask.GetMask("Unit"));
-            targetTransform = DetectionUnit(detectionArea);
-        }
-
-        targetTransform = targetTransform != null ? targetTransform : targetBase.transform;
-
-        Chase(targetTransform.position);
+        hpBar.value = (float)currentHP / _unitData.MaxHP;
     }
 
-    private Transform DetectionUnit(Collider[] detectionArea)
+    public void TakeDamage(int damage)
+    {
+        if (!Object.HasStateAuthority)
+            return;
+
+        currentHP -= damage;
+        UpdateHPBar();
+        if (currentHP <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        Runner.Despawn(Object);
+    }
+
+    private void DetectionUnit()
     {
         float minDistance = float.MaxValue;
-        Transform targetTransform = null;
+        int unitCount = Physics.OverlapSphereNonAlloc(transform.position, _unitData.DetectionRange, detectionArea, unitLayerMask);
 
-        foreach (var unit in detectionArea)
+        for (int i = 0; i < unitCount; i++)
         {
-            if (unit.TryGetComponent(out Unit target))
+            if (detectionArea[i].TryGetComponent(out Unit targetUnit))
             {
-                if (target != this && faction != target.Faction)
+                if (targetUnit != this && faction != targetUnit.Faction)
                 {
-                    float distnce = Vector3.Distance(transform.position, target.transform.position);
+                    float distnce = Vector3.Distance(transform.position, detectionArea[i].ClosestPoint(transform.position));
                     if (distnce < minDistance)
                     {
                         minDistance = distnce;
-                        targetTransform = target.transform;
+                        target = targetUnit;
                     }
                 }
             }
         }
-
-        return targetTransform;
+        targetDistance = minDistance;
     }
 
-    private void Chase(Vector3 targetTransform)
+    private void Chase()
     {
-
-        Vector3 newPos = Vector3.MoveTowards(transform.position, targetTransform, _unitData.MoveSpeed * Runner.DeltaTime);
-
-        transform.position = newPos;
+        if (target != null)
+            transform.position = Vector3.MoveTowards(transform.position, target.transform.position, _unitData.MoveSpeed * Runner.DeltaTime);
+        else
+            transform.position = Vector3.MoveTowards(transform.position, targetBase.transform.position, _unitData.MoveSpeed * Runner.DeltaTime);
     }
 
-    protected virtual void OnDrawGizmosSelected()
+    private void OnTriggerEnter(Collider other)
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position + transform.forward * _unitData.DetectionCenterOffset, _unitData.DetectionRange);
+        /* if (other.gameObject.CompareTag("Ground"))
+         {
+             _collder.isTrigger = false;
+             Collider[] spawnArea = Physics.OverlapSphere(transform.position, 1.5f, LayerMask.GetMask("Unit"));
+
+             foreach (var unit in spawnArea)
+             {
+                 if (unit.TryGetComponent(out Rigidbody target) || unit != this)
+                 {
+                     Vector3 direction = target.transform.position - transform.position;
+                     direction.y = 0;
+                     float distance = Mathf.Max(direction.magnitude, 1f);
+                     direction.Normalize();
+                     target.AddForce(direction * (4 / distance), ForceMode.Impulse);
+                     Debug.Log("밀치기!!");
+                 }
+             }
+         }*/
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        //감지 범위
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, _unitData.DetectionRange);
+
+        //공격 범위
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, _unitData.AttackRange);
     }
 }

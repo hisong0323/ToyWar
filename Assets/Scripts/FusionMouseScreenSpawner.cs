@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
 using Fusion;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class FusionMouseScreenSpawner : NetworkBehaviour
 {
     [SerializeField] private Unit unitPrefab;
-    [SerializeField] private float spawnDistance = 10f;
 
     public override void FixedUpdateNetwork()
     {
@@ -18,13 +18,14 @@ public class FusionMouseScreenSpawner : NetworkBehaviour
                 if (data.Buttons.IsSet(NetworkInputData.SpawnButton))
                 {
                     Faction faction = player.PlayerId == 1 ? Faction.Player1 : Faction.Player2;
+                    GameManager.Instance.SpendMoney(player, 10);
 
-                    var unit = Runner.Spawn(unitPrefab,
+                    var unitObject = Runner.Spawn(unitPrefab,
                                             data.SpawnPosition,
                                             Quaternion.identity,
                                             player);
 
-                    unit.GetComponent<Unit>().Init(faction);
+                    unitObject.GetComponent<Unit>().Init(faction);
                 }
             }
         }
