@@ -1,6 +1,4 @@
-using System.Threading.Tasks;
 using Fusion;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class FusionMouseScreenSpawner : NetworkBehaviour
@@ -11,7 +9,7 @@ public class FusionMouseScreenSpawner : NetworkBehaviour
     {
         if (!Runner.IsServer) return;          // 서버만 전체 입력 검사
 
-        foreach (var player in Runner.ActivePlayers)
+/*        foreach (var player in Runner.ActivePlayers)
         {
             if (Runner.TryGetInputForPlayer<NetworkInputData>(player, out var data))
             {
@@ -24,10 +22,8 @@ public class FusionMouseScreenSpawner : NetworkBehaviour
                                             data.SpawnPosition,
                                             Quaternion.identity,
                                             player);
-
-                    unitObject.GetComponent<Unit>().Init(faction);
                 }
             }
-        }
+        }*/
     }
 }

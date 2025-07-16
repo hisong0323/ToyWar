@@ -1,6 +1,7 @@
 using Fusion;
 using UnityEngine;
 using UnityEngine.UI;
+using static Fusion.NetworkBehaviour;
 
 public class Unit : NetworkBehaviour
 {
@@ -17,9 +18,15 @@ public class Unit : NetworkBehaviour
     [SerializeField]
     private Slider hpBar;
 
+    [Networked, OnChangedRender(nameof(UpdateHPBar))] private int currentHP { get; set; }
+
     private Unit targetBase;
 
     private Unit target;
+
+    private Rigidbody _rigidbody;
+
+    private Collider _collider;
 
     private Collider[] detectionArea = new Collider[50];
 
@@ -31,23 +38,19 @@ public class Unit : NetworkBehaviour
 
     private IAttackBehaviour attackBehaviour;
 
-    private int currentHP;
     public Faction Faction => faction;
     public UnitData UnitData => _unitData;
 
-    public void Init(Faction faction)
+    public void Init()
     {
-        this.faction = faction;
 
-        if (this.faction == Faction.Player1)
-            targetBase = GameManager.Instance.PlayerBase[1];
-        else
-            targetBase = GameManager.Instance.PlayerBase[0];
     }
 
     private void Awake()
     {
         unitLayerMask = LayerMask.GetMask("Unit");
+        _collider = GetComponent<Collider>();
+        _rigidbody = GetComponent<Rigidbody>();
     }
 
     private void Start()
@@ -62,18 +65,30 @@ public class Unit : NetworkBehaviour
                 break;
         }
     }
+
     public override void Spawned()
     {
         if (Object.HasStateAuthority)
         {
             spawnDelay = TickTimer.CreateFromSeconds(Runner, 0.5f);
             currentHP = _unitData.MaxHP;
-            UpdateHPBar();
+
+            if (Object.InputAuthority.PlayerId == 1)
+            {
+                targetBase = GameManager.Instance.PlayerBase[1];
+                faction = Faction.Player1;
+            }
+            else
+            {
+                targetBase = GameManager.Instance.PlayerBase[0];
+                faction = Faction.Player2;
+            }
         }
     }
 
     public override void FixedUpdateNetwork()
     {
+
         if (!Object.HasStateAuthority || !spawnDelay.Expired(Runner))
         {
             return;
@@ -106,6 +121,9 @@ public class Unit : NetworkBehaviour
 
     private void TryAttack()
     {
+        if (!Object.HasStateAuthority)
+            return;
+
         if (canAttack)
         {
             attackCooldown = TickTimer.CreateFromSeconds(Runner, _unitData.AttackDelay);
@@ -116,7 +134,7 @@ public class Unit : NetworkBehaviour
 
     private void UpdateHPBar()
     {
-        if (hpBar == null)
+        if (hpBar == null || _unitData == null)
             return;
 
         hpBar.value = (float)currentHP / _unitData.MaxHP;
@@ -128,7 +146,7 @@ public class Unit : NetworkBehaviour
             return;
 
         currentHP -= damage;
-        UpdateHPBar();
+
         if (currentHP <= 0)
         {
             Die();
@@ -166,31 +184,42 @@ public class Unit : NetworkBehaviour
     private void Chase()
     {
         if (target != null)
-            transform.position = Vector3.MoveTowards(transform.position, target.transform.position, _unitData.MoveSpeed * Runner.DeltaTime);
+        {
+            _rigidbody.MovePosition(Vector3.MoveTowards(transform.position, target.transform.position, _unitData.MoveSpeed * Runner.DeltaTime));
+            //transform.position = Vector3.MoveTowards(transform.position, target.transform.position, _unitData.MoveSpeed * Runner.DeltaTime);
+        }
         else
-            transform.position = Vector3.MoveTowards(transform.position, targetBase.transform.position, _unitData.MoveSpeed * Runner.DeltaTime);
+        {
+            _rigidbody.MovePosition(Vector3.MoveTowards(transform.position, targetBase.transform.position, _unitData.MoveSpeed * Runner.DeltaTime));
+            //transform.position = Vector3.MoveTowards(transform.position, targetBase.transform.position, _unitData.MoveSpeed * Runner.DeltaTime);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        /* if (other.gameObject.CompareTag("Ground"))
-         {
-             _collder.isTrigger = false;
-             Collider[] spawnArea = Physics.OverlapSphere(transform.position, 1.5f, LayerMask.GetMask("Unit"));
+        if (!Object.HasStateAuthority)
+            return;
 
-             foreach (var unit in spawnArea)
-             {
-                 if (unit.TryGetComponent(out Rigidbody target) || unit != this)
-                 {
-                     Vector3 direction = target.transform.position - transform.position;
-                     direction.y = 0;
-                     float distance = Mathf.Max(direction.magnitude, 1f);
-                     direction.Normalize();
-                     target.AddForce(direction * (4 / distance), ForceMode.Impulse);
-                     Debug.Log("¹ÐÄ¡±â!!");
-                 }
-             }
-         }*/
+        if (other.gameObject.CompareTag("Ground"))
+        {
+            _rigidbody.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
+            Collider[] spawnArea = Physics.OverlapSphere(transform.position, 1.2f, unitLayerMask);
+
+            foreach (var unit in spawnArea)
+            {
+                if (unit != this)
+                {
+                    if (unit.TryGetComponent(out Rigidbody targetRigidbody))
+                    {
+                        Vector3 direction = targetRigidbody.transform.position - transform.position;
+                        direction.y = 0;
+                        direction.Normalize();
+                        targetRigidbody.AddForce(direction * 7, ForceMode.Impulse);
+                    }
+                }
+            }
+            _collider.isTrigger = false;
+        }
     }
 
     private void OnDrawGizmosSelected()

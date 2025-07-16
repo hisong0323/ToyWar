@@ -44,15 +44,16 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     private void Update()
     {
-        //_spawnButton = _spawnButton | Input.GetKeyDown(KeyCode.F);
-        if (Input.GetKeyDown(KeyCode.F))
+      //  _spawnButton = _spawnButton | Input.GetMouseButtonUp(0);
+
+        if (Input.GetMouseButtonUp(0))
         {
             _spawnButton = true;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out var hit, Mathf.Infinity))
+
+            if (Physics.Raycast(ray, out var hit, LayerMask.GetMask("Ground")))
             {
-                _spawnPosition = hit.point;
-                _spawnPosition.y = 2;
+                _spawnPosition = hit.point + Vector3.up * 2;
             }
         }
     }
@@ -68,7 +69,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             GameMode = GameMode.AutoHostOrClient,
             SessionName = null, // null로 두면 Fusion이 알아서 랜덤 매칭
             PlayerCount = maxPlayer,
-           // SceneManager = runnerPrefab.GetComponent<NetworkSceneManagerDefault>()
+            // SceneManager = runnerPrefab.GetComponent<NetworkSceneManagerDefault>()
 
         };
 
@@ -144,6 +145,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         data.SpawnPosition = _spawnPosition;
 
         _spawnButton = false;
+
         input.Set(data);
     }
 

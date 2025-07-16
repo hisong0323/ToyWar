@@ -7,4 +7,4 @@ public struct NetworkInputData : INetworkInput
     public NetworkButtons Buttons;
 
     public Vector3 SpawnPosition;
-} 
+}

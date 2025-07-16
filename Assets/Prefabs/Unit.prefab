@@ -99,7 +99,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1171428224180703236}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 29d61a88faad96344aaa28c585732d9f, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -145,7 +145,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2910df37c70b2ec42ac9dd0392fb820b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _faction: 0
+  faction: 0
   _unitData: {fileID: 11400000, guid: 3d5c0256b255ecb4aafd35a6b11c7905, type: 2}
   hpBar: {fileID: 8575070356117513018}
 --- !u!54 &7893989309740144485
@@ -171,10 +171,10 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
-  m_IsKinematic: 1
+  m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 80
-  m_CollisionDetection: 0
+  m_Constraints: 112
+  m_CollisionDetection: 1
 --- !u!114 &4923849866184724259
 MonoBehaviour:
   m_ObjectHideFlags: 0

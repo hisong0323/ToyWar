@@ -7,7 +7,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField]
     private Unit[] playerBase;
 
-    [Networked, Capacity(2)] private NetworkArray<int> playerMoney => default;
+    [Networked, OnChangedRender(nameof(ChangedMoney)), Capacity(2)] private NetworkArray<int> playerMoney => default;
+
+    public Action ChangedMoneyAction;
 
     private TickTimer timer;
 
@@ -39,6 +41,11 @@ public class GameManager : NetworkBehaviour
                 GainMoney(player, 1);
             }
         }
+    }
+
+    private void ChangedMoney()
+    {
+        ChangedMoneyAction();
     }
 
     public void GainMoney(PlayerRef player, int value)

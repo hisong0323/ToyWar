@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitName: "\uADFC\uC811\uC720"
   unitType: 0
-  maxHP: 20
+  maxHP: 222
   moveSpeed: 4
   detectionRange: 7
   attackRange: 3
-  attackPower: 5
+  attackPower: 1
   attackDelay: 1
