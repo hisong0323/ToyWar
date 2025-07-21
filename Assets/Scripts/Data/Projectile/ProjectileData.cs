@@ -8,4 +8,7 @@ public class ProjectileData : ScriptableObject
 
     [SerializeField]
     private float speed;
+
+    public bool IsPiercing => isPiercing;
+    public float Speed => speed;
 }

@@ -4,26 +4,51 @@ using UnityEngine;
 public class Shop : NetworkBehaviour
 {
     [SerializeField]
-    private UnitDatas unitDatas;
+    private int tier;
 
     [SerializeField]
-    private UnitPlacer unitPlacer;
+    private UnitDatabase unitDatabase;
 
-    public void RandomUnitData(int tier)
+    [SerializeField]
+    private UnitPlacer unitPlacerPrefab;
+
+    [SerializeField]
+    private Item[] items;
+
+    private UnitData unitData;
+
+    public override void Spawned()
     {
-        //Debug.Log(unitDatas.TierUnitDatas[tier - 1].UnitDatas[0].UnitName);
+        Setting();
+    }
 
-        if (Runner.LocalPlayer == Runner.LocalPlayer)
+    private void Setting()
+    {
+        for (int i = 0; i < items.Length; i++)
         {
-            Debug.Log("소환 실행");
-            RPC_UnitPlacerSpawn(Runner.LocalPlayer);
+            int itt = Random.Range(0, unitDatabase.UnitDatas.Length);
+            items[i].Init(unitDatabase.UnitDatas[itt]);
+            Debug.Log(itt);
+        }
+    }
+
+    public void Buy(Item item)
+    {
+        unitData = item.UnitData;
+
+        Debug.Log("구매");
+
+        if (GameManager.Instance.SpendMoney(Runner.LocalPlayer, unitData.Price))
+        {
+            RPC_UnitPlacerSpawn();
         }
     }
 
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_UnitPlacerSpawn(PlayerRef player)
+    private void RPC_UnitPlacerSpawn()
     {
-        Runner.Spawn(unitPlacer, transform.position, Quaternion.identity, player);
+        UnitPlacer unitPlacer = Runner.Spawn(unitPlacerPrefab, transform.position, Quaternion.identity, Runner.LocalPlayer);
+        unitPlacer.Init(unitData);
     }
 }

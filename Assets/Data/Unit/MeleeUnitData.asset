@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: MeleeUnitData
   m_EditorClassIdentifier: 
   unitName: "\uADFC\uC811\uC720"
+  price: 30
   unitType: 0
-  maxHP: 222
+  maxHP: 20
   moveSpeed: 4
   detectionRange: 7
   attackRange: 3
-  attackPower: 1
+  attackPower: 4
   attackDelay: 1
+  model: {fileID: 1706945334504035972, guid: 7c2730c7f06c7924faa44e2b8390e46f, type: 3}

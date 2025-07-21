@@ -54,9 +54,15 @@ public class GameManager : NetworkBehaviour
         playerMoney.Set(index, playerMoney.Get(index) + value);
     }
 
-    public void SpendMoney(PlayerRef player, int value)
+    public bool SpendMoney(PlayerRef player, int value)
     {
         int index = player.PlayerId - 1;
-        playerMoney.Set(index, playerMoney.Get(index) - value);
+        if (playerMoney.Get(index) >= value)
+        {
+            playerMoney.Set(index, playerMoney.Get(index) - value);
+            return true;
+        }
+        else
+            return false;
     }
 }

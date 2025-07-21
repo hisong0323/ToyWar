@@ -6,24 +6,23 @@ public class UnitPlacer : NetworkBehaviour
     [SerializeField]
     private Unit unitPrefab;
 
+    private MeshFilter model;
+
+    private UnitData unitData;
+
+    private void Awake()
+    {
+        model = transform.GetComponentInChildren<MeshFilter>();
+    }
+
+    public void Init(UnitData data)
+    {
+        unitData = data;
+        model.sharedMesh = data.Model.GetComponent<MeshFilter>().sharedMesh;
+    }
 
     public override void FixedUpdateNetwork()
     {
-        /*        if (Object.HasStateAuthority)
-                    foreach (var player in Runner.ActivePlayers)
-                    {
-                        if (Runner.TryGetInputForPlayer<NetworkInputData>(player, out var data))
-                        {
-                            if (data.Buttons.IsSet(NetworkInputData.SpawnButton))
-                            {
-                                GameManager.Instance.SpendMoney(player, 10);
-
-                                Runner.Spawn(unitPrefab, data.SpawnPosition, Quaternion.identity, player);
-                                Runner.Despawn(Object);
-                            }
-                        }
-                    }*/
-
         if (Object.HasInputAuthority)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -35,8 +34,6 @@ public class UnitPlacer : NetworkBehaviour
             if (GetInput(out NetworkInputData data))
                 if (data.Buttons.IsSet(NetworkInputData.SpawnButton))
                 {
-                    GameManager.Instance.SpendMoney(Object.InputAuthority, 10);
-
                     RPC_UnitSpawn(data.SpawnPosition);
                 }
         }
@@ -45,7 +42,8 @@ public class UnitPlacer : NetworkBehaviour
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
     private void RPC_UnitSpawn(Vector3 spawnPosition)
     {
-        Runner.Spawn(unitPrefab, spawnPosition, Quaternion.identity, Object.InputAuthority);
+        Unit unit = Runner.Spawn(unitPrefab, spawnPosition, Quaternion.identity, Object.InputAuthority);
+        unit.Init(unitData);
         Runner.Despawn(Object);
     }
 }

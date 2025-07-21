@@ -9,14 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51f003992596eb04cb73c3dbf6dcd066, type: 3}
-  m_Name: UnitDatas
+  m_Script: {fileID: 11500000, guid: a16add4ab4d201e4496c7693b24955d0, type: 3}
+  m_Name: ProjectileData
   m_EditorClassIdentifier: 
-  tierUnitDatas:
-  - tier: 1
-    UnitDatas:
-    - {fileID: 11400000, guid: 3d5c0256b255ecb4aafd35a6b11c7905, type: 2}
-  - tier: 2
-    UnitDatas: []
-  - tier: 3
-    UnitDatas: []
+  isPiercing: 0
+  speed: 5

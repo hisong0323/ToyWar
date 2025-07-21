@@ -20,7 +20,6 @@ public class CameraController : MonoBehaviour
     private void Zoom()
     {
         float wheelInput = Input.GetAxisRaw("Mouse ScrollWheel");
-        Debug.Log(wheelInput);
         transform.Translate(transform.forward * zoomSpeed * wheelInput * Time.deltaTime);
     }
 }

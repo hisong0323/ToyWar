@@ -41,9 +41,23 @@ public class Unit : NetworkBehaviour
     public Faction Faction => faction;
     public UnitData UnitData => _unitData;
 
-    public void Init()
+    public void Init(UnitData data)
     {
+        _unitData = data;
 
+        NetworkObject model = Runner.Spawn(data.Model, transform.position);
+        model.transform.SetParent(transform);
+
+        if (Object.InputAuthority.PlayerId == 1)
+        {
+            targetBase = GameManager.Instance.PlayerBase[1];
+            faction = Faction.Player1;
+        }
+        else
+        {
+            targetBase = GameManager.Instance.PlayerBase[0];
+            faction = Faction.Player2;
+        }
     }
 
     private void Awake()
@@ -68,22 +82,8 @@ public class Unit : NetworkBehaviour
 
     public override void Spawned()
     {
-        if (Object.HasStateAuthority)
-        {
-            spawnDelay = TickTimer.CreateFromSeconds(Runner, 0.5f);
-            currentHP = _unitData.MaxHP;
-
-            if (Object.InputAuthority.PlayerId == 1)
-            {
-                targetBase = GameManager.Instance.PlayerBase[1];
-                faction = Faction.Player1;
-            }
-            else
-            {
-                targetBase = GameManager.Instance.PlayerBase[0];
-                faction = Faction.Player2;
-            }
-        }
+        spawnDelay = TickTimer.CreateFromSeconds(Runner, 0.5f);
+        currentHP = _unitData.MaxHP;
     }
 
     public override void FixedUpdateNetwork()

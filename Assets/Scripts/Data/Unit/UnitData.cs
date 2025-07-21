@@ -7,6 +7,9 @@ public class UnitData : ScriptableObject
     private string unitName;
 
     [SerializeField]
+    private int price;
+
+    [SerializeField]
     private UnitType unitType;
 
     [SerializeField]
@@ -27,7 +30,11 @@ public class UnitData : ScriptableObject
     [SerializeField]
     private float attackDelay;
 
+    [SerializeField]
+    private GameObject model;
+
     public string UnitName => unitName;
+    public int Price => price;
     public UnitType UnitType => unitType;
     public int MaxHP => maxHP;
     public float MoveSpeed => moveSpeed;
@@ -35,4 +42,5 @@ public class UnitData : ScriptableObject
     public float AttackRange => attackRange;
     public int AttackPower => attackPower;
     public float AttackDelay => attackDelay;
+    public GameObject Model => model;
 }

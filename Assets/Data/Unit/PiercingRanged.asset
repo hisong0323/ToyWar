@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6183067b509616540a4107489a0f1e96, type: 3}
-  m_Name: RangedUnitData
+  m_Name: PiercingRanged
   m_EditorClassIdentifier: 
   unitName: "\uC6D0\uAC70\uB9AC \uC720\uB2DB"
   price: 40
@@ -21,5 +21,5 @@ MonoBehaviour:
   attackRange: 7
   attackPower: 2
   attackDelay: 0.4
-  model: {fileID: 8766015785144116966, guid: 72883cb2bf087c4468a32d1509919ec1, type: 3}
-  projectile: {fileID: 2202357286275483094, guid: f03f267a7e4c3be489585717407fe3c3, type: 3}
+  model: {fileID: 6951536728388356051, guid: 719d55e986138d8468ad07f2828168de, type: 3}
+  projectile: {fileID: 2202357286275483094, guid: 4d1115ea04034294ea6d88cc0fd21e4f, type: 3}

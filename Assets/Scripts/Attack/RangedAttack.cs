@@ -12,6 +12,7 @@ public class RangedAttack : MonoBehaviour, IAttackBehaviour
 
     public void Attack(Unit unit, Unit target)
     {
-        unit.Runner.Spawn(unitData.Projectile, transform.position);
+        Projectile projectile = unit.Runner.Spawn(unitData.Projectile, transform.position);
+        projectile.Init(unit, target);
     }
 }
