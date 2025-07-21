@@ -10,7 +10,7 @@ public class Shop : NetworkBehaviour
     private UnitDatabase unitDatabase;
 
     [SerializeField]
-    private UnitPlacer unitPlacerPrefab;
+    private Unit unitPrefab;
 
     [SerializeField]
     private Item[] items;
@@ -40,15 +40,15 @@ public class Shop : NetworkBehaviour
 
         if (GameManager.Instance.SpendMoney(Runner.LocalPlayer, unitData.Price))
         {
-            RPC_UnitPlacerSpawn();
+            RPC_UnitSpawn();
         }
     }
 
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_UnitPlacerSpawn()
+    private void RPC_UnitSpawn()
     {
-        UnitPlacer unitPlacer = Runner.Spawn(unitPlacerPrefab, transform.position, Quaternion.identity, Runner.LocalPlayer);
-        unitPlacer.Init(unitData);
+        Unit unit = Runner.Spawn(unitPrefab, transform.position, Quaternion.identity, Runner.LocalPlayer);
+        unit.Init(unitData);
     }
 }

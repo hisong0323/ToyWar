@@ -5,12 +5,12 @@ using static Fusion.NetworkBehaviour;
 
 public class Unit : NetworkBehaviour
 {
-
-    [SerializeField] private Faction faction;
-
     [Networked] private TickTimer attackCooldown { get; set; }
 
     [Networked] private TickTimer spawnDelay { get; set; }
+
+    [SerializeField]
+    private Faction faction;
 
     [SerializeField]
     private UnitData _unitData;
@@ -44,9 +44,6 @@ public class Unit : NetworkBehaviour
     public void Init(UnitData data)
     {
         _unitData = data;
-
-        NetworkObject model = Runner.Spawn(data.Model, transform.position);
-        model.transform.SetParent(transform);
 
         if (Object.InputAuthority.PlayerId == 1)
         {
@@ -82,12 +79,43 @@ public class Unit : NetworkBehaviour
 
     public override void Spawned()
     {
-        spawnDelay = TickTimer.CreateFromSeconds(Runner, 0.5f);
         currentHP = _unitData.MaxHP;
+        Collider[] spawnArea = Physics.OverlapSphere(transform.position, 1.2f, unitLayerMask);
+
+        foreach (var unit in spawnArea)
+        {
+            if (unit != this)
+            {
+                if (unit.TryGetComponent(out Rigidbody targetRigidbody))
+                {
+                    Vector3 direction = targetRigidbody.transform.position - transform.position;
+                    direction.y = 0;
+                    direction.Normalize();
+                    targetRigidbody.AddForce(direction * 7, ForceMode.Impulse);
+                }
+            }
+        }
     }
 
     public override void FixedUpdateNetwork()
     {
+        if (Object.HasInputAuthority)
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            if (Physics.Raycast(ray, out var hit, LayerMask.GetMask("Ground")))
+            {
+                transform.position = hit.point + Vector3.up * 2;
+            }
+            if (GetInput(out NetworkInputData data))
+            {
+                Debug.Log("´©¸¥");
+                if (data.Buttons.IsSet(NetworkInputData.SpawnButton))
+                {
+
+                }
+            }
+        }
 
         if (!Object.HasStateAuthority || !spawnDelay.Expired(Runner))
         {
@@ -203,21 +231,9 @@ public class Unit : NetworkBehaviour
         if (other.gameObject.CompareTag("Ground"))
         {
             _rigidbody.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotation;
-            Collider[] spawnArea = Physics.OverlapSphere(transform.position, 1.2f, unitLayerMask);
+            
+            spawnDelay = TickTimer.CreateFromSeconds(Runner, 0.5f);
 
-            foreach (var unit in spawnArea)
-            {
-                if (unit != this)
-                {
-                    if (unit.TryGetComponent(out Rigidbody targetRigidbody))
-                    {
-                        Vector3 direction = targetRigidbody.transform.position - transform.position;
-                        direction.y = 0;
-                        direction.Normalize();
-                        targetRigidbody.AddForce(direction * 7, ForceMode.Impulse);
-                    }
-                }
-            }
             _collider.isTrigger = false;
         }
     }
